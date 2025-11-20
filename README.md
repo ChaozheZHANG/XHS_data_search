@@ -22,6 +22,8 @@
 
 **✨ 专业的小红书数据采集解决方案，支持笔记爬取，保存格式为excel或者media**
 
+**✨ 更新了自己的脚本，方便使用**
+
 **✨ 小红书全域运营解决方法，AI一键改写笔记（图文，视频）直接上传**
 
 ## ⭐功能列表
@@ -108,29 +110,5 @@ python main.py
 | 25/07/15 | - 更新 xs version56 & 小红书创作者接口              |
 
 
-## 🧸额外说明
-1. 感谢star⭐和follow📰！不时更新
-2. 作者的联系方式在主页里，有问题可以随时联系我
-3. 可以关注下作者的其他项目，欢迎 PR 和 issue
-4. 感谢赞助！如果此项目对您有帮助，请作者喝一杯奶茶~~ （开心一整天😊😊）
-5. thank you~~~
-
-<div align="center">
-  <img src="./author/wx_pay.png" width="400px" alt="微信赞赏码"> 
-  <img src="./author/zfb_pay.jpg" width="400px" alt="支付宝收款码">
-</div>
-
-
-## 📈 Star 趋势
-<a href="https://www.star-history.com/#cv-cat/Spider_XHS&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=cv-cat/Spider_XHS&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=cv-cat/Spider_XHS&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=cv-cat/Spider_XHS&type=Date" />
- </picture>
-</a>
-
-## 🍔 交流群
-<img width="1031" height="1449" alt="5355a0f82398ee2052f2e659328d737b" src="https://github.com/user-attachments/assets/ea690f33-0c5f-4941-9332-de9feff838e7" />
 
 
