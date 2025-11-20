@@ -185,10 +185,13 @@ class XHS_Apis():
             headers, cookies, data = generate_request_params(cookies_str, splice_api)
             response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
-            success, msg = res_json["success"], res_json["msg"]
+            success, msg = res_json["success"], res_json.get("msg", "未知错误")
+            if not success:
+                logger.error(f"获取用户笔记失败 - user_id: {user_id}, msg: {msg}, response: {json.dumps(res_json, ensure_ascii=False)[:500]}")
         except Exception as e:
             success = False
             msg = str(e)
+            logger.error(f"获取用户笔记异常 - user_id: {user_id}, error: {e}")
         return success, msg, res_json
 
 
@@ -204,21 +207,70 @@ class XHS_Apis():
         try:
             urlParse = urllib.parse.urlparse(user_url)
             user_id = urlParse.path.split("/")[-1]
-            kvs = urlParse.query.split('&')
-            kvDist = {kv.split('=')[0]: kv.split('=')[1] for kv in kvs}
-            xsec_token = kvDist['xsec_token'] if 'xsec_token' in kvDist else ""
-            xsec_source = kvDist['xsec_source'] if 'xsec_source' in kvDist else "pc_search"
+            params = urllib.parse.parse_qs(urlParse.query)
+            xsec_token = urllib.parse.unquote(params.get('xsec_token', [''])[0])
+            xsec_source = urllib.parse.unquote(params.get('xsec_source', ['pc_search'])[0])
+            
+            # 如果token为空或失败，尝试不使用token或使用默认值
+            if not xsec_token:
+                xsec_source = "pc_search"
+            
+            logger.info(f"获取用户笔记 - user_id: {user_id}, xsec_source: {xsec_source}, token_len: {len(xsec_token) if xsec_token else 0}")
+            
+            # 尝试多种方式获取，找到有效的token和source组合
+            methods_to_try = [
+                (xsec_token, xsec_source),  # 原始方式
+                ("", "pc_search"),  # 不使用token
+                ("", "pc_feed"),  # 使用pc_feed
+            ]
+            
+            valid_token = ""
+            valid_source = ""
+            success = False
+            msg = ""
+            
+            for token, source in methods_to_try:
+                try:
+                    success, msg, res_json = self.get_user_note_info(user_id, cursor, cookies_str, token, source, proxies)
+                    if success:
+                        valid_token = token
+                        valid_source = source
+                        logger.info(f"成功找到有效方式 - token: {'有' if token else '无'}, source: {source}")
+                        break
+                    else:
+                        logger.warning(f"方式失败 - token: {'有' if token else '无'}, source: {source}, msg: {msg}")
+                except Exception as e:
+                    logger.warning(f"方式异常 - token: {'有' if token else '无'}, source: {source}, error: {e}")
+                    continue
+            
+            if not success:
+                raise Exception(msg if msg else "所有方式都失败")
+            
+            # 使用找到的有效方式继续获取所有笔记
             while True:
-                success, msg, res_json = self.get_user_note_info(user_id, cursor, cookies_str, xsec_token, xsec_source, proxies)
-                if not success:
-                    raise Exception(msg)
-                notes = res_json["data"]["notes"]
-                if 'cursor' in res_json["data"]:
-                    cursor = str(res_json["data"]["cursor"])
+                # 处理当前获取的数据
+                if res_json and "data" in res_json and "notes" in res_json["data"]:
+                    notes = res_json["data"]["notes"]
+                    if len(notes) == 0:
+                        break
+                    note_list.extend(notes)
+                    
+                    # 检查是否还有更多
+                    if not res_json["data"].get("has_more", False):
+                        break
+                    
+                    # 获取下一个cursor
+                    if 'cursor' in res_json["data"]:
+                        cursor = str(res_json["data"]["cursor"])
+                    else:
+                        break
+                    
+                    # 获取下一页
+                    success, msg, res_json = self.get_user_note_info(user_id, cursor, cookies_str, valid_token, valid_source, proxies)
+                    if not success:
+                        logger.warning(f"获取下一页失败: {msg}")
+                        break
                 else:
-                    break
-                note_list.extend(notes)
-                if len(notes) == 0 or not res_json["data"]["has_more"]:
                     break
         except Exception as e:
             success = False
